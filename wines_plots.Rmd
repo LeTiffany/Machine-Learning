@@ -1,0 +1,59 @@
+---
+title: "Wines_plots"
+author: "Chloe Florence"
+date: "2025-09-26"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Importing Data
+
+```{r}
+red_wine <- read.csv("winequality-red.csv", header = TRUE, sep = ";")
+red_wine["type"] = 1
+head(red_wine)
+```
+
+
+```{r}
+white_wine <- read.csv("winequality-white.csv", header = TRUE, sep = ";")
+white_wine["type"] = 0
+head(white_wine)
+```
+
+```{r}
+wine <- bind_rows(red_wine, white_wine)
+head(wine)
+```
+
+# Plots
+
+```{r}
+plot(wine$total.sulfur.dioxide, jitter(wine$type)) # can tell there is a difference
+#view(cor(wine))
+```
+
+```{r}
+plot(wine$chlorides, jitter(wine$type))
+```
+
+```{r}
+plot(wine$alcohol, wine$density)
+wo_outlier <- wine[wine["density"] < 1.01,]
+plot(wo_outlier$alcohol, wo_outlier$density)
+wine[wine["density"] > 1.01,]
+
+```
+
+
+
+
+
+
+
+
+
