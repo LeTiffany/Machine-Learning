@@ -1,1 +1,3 @@
 # Machine-Learning
+
+Study the fundamentals of machine learning, covering theoretical principles, statistical machine learning methods and tools, computation algorithms, and their applications to real world problems. Topics include supervised learning (linear and logistic regression, regularization methods such as lasso and ridge, variable decision trees, support vector machines, bagging and boosting, neural networks, and deep learning), unsupervised learning (principle component analysis, clustering, dimension reduction). Important concepts such as bias-variance tradeoff, overfitting, curse of dimensionality, and cross validation are also practiced.
