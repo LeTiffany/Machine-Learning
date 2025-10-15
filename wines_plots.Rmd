@@ -10,57 +10,85 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+```{r}
+library(dplyr)
+```
+
+# Data Preprocessing 
+
 ## Importing Data
 
 ```{r}
-red_wine <- read.csv("winequality-red.csv", header = TRUE, sep = ";")
+red_wine <- read.csv("winequality-red", header = TRUE, sep = ";")
 red_wine["type"] = 1
 head(red_wine)
 ```
 
 
 ```{r}
-white_wine <- read.csv("winequality-white.csv", header = TRUE, sep = ";")
+white_wine <- read.csv("winequality-white", header = TRUE, sep = ";")
 white_wine["type"] = 0
 head(white_wine)
 ```
 
 ```{r}
-wine <- rbind(red_wine, white_wine)
+wine <- bind_rows(red_wine, white_wine)
 head(wine)
 ```
 
-# Plots
+
+# Data Exploration
+
+## Plots
 
 ```{r}
-plot(wine$total.sulfur.dioxide, jitter(wine$type), xlab = "Sulfur Dioxide", ylab = "Type") # can tell there is a difference
+plot(wine$total.sulfur.dioxide, jitter(wine$type)) # can tell there is a difference
 #view(cor(wine))
 ```
 
 ```{r}
-boxplot(wine$total.sulfur.dioxide, wine$type)
+plot(wine$chlorides, jitter(wine$type))
 ```
 
 ```{r}
-wine[wine[,"total.sulfur.dioxide"] > 400,]
-```
-
-```{r}
-plot(wine$chlorides, jitter(wine$type), xlab = "Chlorides", ylab = "Type")
-```
-
-```{r}
-boxplot(wine$chlorides, wine$type)
-```
-
-```{r}
-wine[wine[, "chlorides"] > 0.6,]
-```
-
-
-```{r}
-plot(wine$alcohol, wine$density, xlab = "Alcohol", ylab = "Density")
+plot(wine$alcohol, wine$density)
 wo_outlier <- wine[wine["density"] < 1.01,]
-plot(wo_outlier$alcohol, wo_outlier$density, xlab = "Alcohol", ylab = "Density")
+plot(wo_outlier$alcohol, wo_outlier$density)
 wine[wine["density"] > 1.01,]
+
 ```
+
+```{r}
+# looking at which variables are correlated
+cor(wine)
+```
+
+Looks like type of wine is highly correlated with serveral predictors. This may mean that it makes sense to look at the quality of the wine just so there are less predictors to deal with. 
+
+## Correlations
+```{r}
+# treating qulaity as a factor
+wine$good <- ifelse(wine$quality > 5, 1, 0)
+#View(wine)
+
+# care more about if predictors correlated with this good value
+cor(wine)
+```
+
+## Summary Statistics
+```{r}
+summary(wine)
+```
+
+
+# Classification Models
+
+```{r}
+# logisitic regression 
+log_mod <- glm(good ~ . - quality, data = wine, family = binomial)
+summary(log_mod)
+```
+
+
+
+
