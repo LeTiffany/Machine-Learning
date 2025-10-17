@@ -104,6 +104,14 @@ log_mod <- glm(good ~ . - quality, data = wine, family = binomial)
 summary(log_mod)
 ```
 
+```{r}
+set.seed(1)
+a <- sample(1:6497, 1299)
+b <- sample(setdiff(1:6497, a), 1299)
+c <- sample(setdiff(1:6497, c(a, b)), 1299)
+d <- sample (setdiff(1:6497, c(a, b, c)), 1300)
+e <- setdiff(1:6497, c(a, b, c, d))
+```
 
 
 
