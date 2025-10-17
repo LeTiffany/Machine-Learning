@@ -32,7 +32,7 @@ head(white_wine)
 ```
 
 ```{r}
-wine <- bind_rows(red_wine, white_wine)
+wine <- rbind(red_wine, white_wine)
 head(wine)
 ```
 
@@ -42,20 +42,35 @@ head(wine)
 ## Plots
 
 ```{r}
-plot(wine$total.sulfur.dioxide, jitter(wine$type)) # can tell there is a difference
+plot(wine$total.sulfur.dioxide, jitter(wine$type), xlab = "Sulfur Dioxide", ylab = "Type") # can tell there is a difference
 #view(cor(wine))
 ```
 
 ```{r}
-plot(wine$chlorides, jitter(wine$type))
+boxplot(wine$total.sulfur.dioxide, wine$type)
 ```
 
 ```{r}
-plot(wine$alcohol, wine$density)
-wo_outlier <- wine[wine["density"] < 1.01,]
-plot(wo_outlier$alcohol, wo_outlier$density)
-wine[wine["density"] > 1.01,]
+wine[wine[,"total.sulfur.dioxide"] > 400,]
+```
 
+```{r}
+plot(wine$chlorides, jitter(wine$type), xlab = "Chlorides", ylab = "Type")
+```
+
+```{r}
+boxplot(wine$chlorides, wine$type)
+```
+
+```{r}
+wine[wine[, "chlorides"] > 0.6,]
+```
+
+```{r}
+plot(wine$alcohol, wine$density, xlab = "Alcohol", ylab = "Density")
+wo_outlier <- wine[wine["density"] < 1.01,]
+plot(wo_outlier$alcohol, wo_outlier$density, xlab = "Alcohol", ylab = "Density")
+wine[wine["density"] > 1.01,]
 ```
 
 ```{r}
