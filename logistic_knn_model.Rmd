@@ -1,6 +1,6 @@
 ---
 title: "Logistic_model"
-author: "Chloe Florence"
+author: "Chloe Florence and Tiffany Le"
 date: "2025-10-17"
 output: pdf_document
 ---
