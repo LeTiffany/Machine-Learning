@@ -272,22 +272,19 @@ plot(roc(wine$good[d], as.numeric(knn_d)), main = "ROC Curve", xlab = "False Pos
 plot(roc(wine$good[e], as.numeric(knn_e)), main = "ROC Curve", xlab = "False Positive Rate", ylab =  "True Positive Rate")
 ```
 
+```{r}
+par(mfrow = c(2, 3))
 
+boxplot(wine$volatile.acidity, wine$good, xlab = "Volatile Acidity", ylab = "Wine Quality")
 
+boxplot(wine$residual.sugar, wine$good, xlab = "Residual Sugar", ylab = "Wine Quality")
 
+boxplot(wine$total.sulfur.dioxide, wine$good, xlab = "Total Sulfur Dioxide", ylab = "Wine Quality")
 
+boxplot(wine$free.sulfur.dioxide, wine$good, xlab = "Free Sulfur Dioxide", ylab = "Wine Quality")
 
+boxplot(wine$sulphates, wine$good, xlab = "Sulphates", ylab = "Wine Quality")
 
+boxplot(wine$alcohol, wine$good, xlab = "Alcohol", ylab = "Wine Quality")
 
-
-
-
-
-
-
-
-
-
-
-
-
+```
