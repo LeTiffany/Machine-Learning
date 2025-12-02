@@ -9,7 +9,7 @@ red_wine["type"] = 1
 white_wine <- read.csv("winequality-white.csv", header = TRUE, sep = ";")
 white_wine["type"] = 0
 wine <- bind_rows(red_wine, white_wine)
-wine$good <- ifelse(wine$quality > 6, 1, 0)
+wine$good <- ifelse(wine$quality > 5, 1, 0)
 
 hist(wine$quality, main = "Histogram of Wine Quality", xlab = "Wine Quality")
 

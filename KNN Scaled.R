@@ -1,4 +1,6 @@
 set.seed(1)
+library(dplyr)
+library(class)
 library(pROC)
 
 red_wine <- read.csv("winequality-red.csv", header = TRUE, sep = ";")
@@ -6,7 +8,7 @@ red_wine["type"] = 1
 white_wine <- read.csv("winequality-white.csv", header = TRUE, sep = ";")
 white_wine["type"] = 0
 wine <- bind_rows(red_wine, white_wine)
-wine$good <- ifelse(wine$quality > 6, 1, 0)
+wine$good <- ifelse(wine$quality > 5, 1, 0)
 
 a <- sample(1:6497, 1299)
 b <- sample(setdiff(1:6497, a), 1299)
@@ -20,7 +22,7 @@ wine_knn_cv <- function(k) {
   tscaled <- scale(data.frame(volatile.acidity = wine$volatile.acidity[train],
                               residual.sugar = wine$residual.sugar[train],
                               free.sulfur.dioxide = wine$free.sulfur.dioxide[train],
-                              total.sulfure.dioxide = wine$total.sulfur.dioxide[train],
+                              total.sulfur.dioxide = wine$total.sulfur.dioxide[train],
                               sulfates = wine$sulphates[train],
                               alcohol = wine$alcohol[train]))
   
@@ -28,7 +30,7 @@ wine_knn_cv <- function(k) {
                scale(data.frame(volatile.acidity = wine$volatile.acidity[a],
                                 residual.sugar = wine$residual.sugar[a],
                                 free.sulfur.dioxide = wine$free.sulfur.dioxide[a],
-                                total.sulfure.dioxide = wine$total.sulfur.dioxide[a],
+                                total.sulfur.dioxide = wine$total.sulfur.dioxide[a],
                                 sulfates = wine$sulphates[a],
                                 alcohol = wine$alcohol[a]),
                      center = attr(tscaled, "scaled:center"),
@@ -42,7 +44,7 @@ wine_knn_cv <- function(k) {
   tscaled <- scale(data.frame(volatile.acidity = wine$volatile.acidity[train],
                               residual.sugar = wine$residual.sugar[train],
                               free.sulfur.dioxide = wine$free.sulfur.dioxide[train],
-                              total.sulfure.dioxide = wine$total.sulfur.dioxide[train],
+                              total.sulfur.dioxide = wine$total.sulfur.dioxide[train],
                               sulfates = wine$sulphates[train],
                               alcohol = wine$alcohol[train]))
   
@@ -50,7 +52,7 @@ wine_knn_cv <- function(k) {
                scale(data.frame(volatile.acidity = wine$volatile.acidity[b],
                                 residual.sugar = wine$residual.sugar[b],
                                 free.sulfur.dioxide = wine$free.sulfur.dioxide[b],
-                                total.sulfure.dioxide = wine$total.sulfur.dioxide[b],
+                                total.sulfur.dioxide = wine$total.sulfur.dioxide[b],
                                 sulfates = wine$sulphates[b],
                                 alcohol = wine$alcohol[b]),
                      center = attr(tscaled, "scaled:center"),
@@ -64,7 +66,7 @@ wine_knn_cv <- function(k) {
   tscaled <- scale(data.frame(volatile.acidity = wine$volatile.acidity[train],
                               residual.sugar = wine$residual.sugar[train],
                               free.sulfur.dioxide = wine$free.sulfur.dioxide[train],
-                              total.sulfure.dioxide = wine$total.sulfur.dioxide[train],
+                              total.sulfur.dioxide = wine$total.sulfur.dioxide[train],
                               sulfates = wine$sulphates[train],
                               alcohol = wine$alcohol[train]))
   
@@ -72,7 +74,7 @@ wine_knn_cv <- function(k) {
                scale(data.frame(volatile.acidity = wine$volatile.acidity[c],
                                 residual.sugar = wine$residual.sugar[c],
                                 free.sulfur.dioxide = wine$free.sulfur.dioxide[c],
-                                total.sulfure.dioxide = wine$total.sulfur.dioxide[c],
+                                total.sulfur.dioxide = wine$total.sulfur.dioxide[c],
                                 sulfates = wine$sulphates[c],
                                 alcohol = wine$alcohol[c]),
                      center = attr(tscaled, "scaled:center"),
@@ -86,7 +88,7 @@ wine_knn_cv <- function(k) {
   tscaled <- scale(data.frame(volatile.acidity = wine$volatile.acidity[train],
                               residual.sugar = wine$residual.sugar[train],
                               free.sulfur.dioxide = wine$free.sulfur.dioxide[train],
-                              total.sulfure.dioxide = wine$total.sulfur.dioxide[train],
+                              total.sulfur.dioxide = wine$total.sulfur.dioxide[train],
                               sulfates = wine$sulphates[train],
                               alcohol = wine$alcohol[train]))
   
@@ -94,7 +96,7 @@ wine_knn_cv <- function(k) {
                scale(data.frame(volatile.acidity = wine$volatile.acidity[d],
                                 residual.sugar = wine$residual.sugar[d],
                                 free.sulfur.dioxide = wine$free.sulfur.dioxide[d],
-                                total.sulfure.dioxide = wine$total.sulfur.dioxide[d],
+                                total.sulfur.dioxide = wine$total.sulfur.dioxide[d],
                                 sulfates = wine$sulphates[d],
                                 alcohol = wine$alcohol[d]),
                      center = attr(tscaled, "scaled:center"),
@@ -108,7 +110,7 @@ wine_knn_cv <- function(k) {
   tscaled <- scale(data.frame(volatile.acidity = wine$volatile.acidity[train],
                               residual.sugar = wine$residual.sugar[train],
                               free.sulfur.dioxide = wine$free.sulfur.dioxide[train],
-                              total.sulfure.dioxide = wine$total.sulfur.dioxide[train],
+                              total.sulfur.dioxide = wine$total.sulfur.dioxide[train],
                               sulfates = wine$sulphates[train],
                               alcohol = wine$alcohol[train]))
   
@@ -116,7 +118,7 @@ wine_knn_cv <- function(k) {
                scale(data.frame(volatile.acidity = wine$volatile.acidity[e],
                                 residual.sugar = wine$residual.sugar[e],
                                 free.sulfur.dioxide = wine$free.sulfur.dioxide[e],
-                                total.sulfure.dioxide = wine$total.sulfur.dioxide[e],
+                                total.sulfur.dioxide = wine$total.sulfur.dioxide[e],
                                 sulfates = wine$sulphates[e],
                                 alcohol = wine$alcohol[e]),
                      center = attr(tscaled, "scaled:center"),
@@ -133,7 +135,7 @@ train <- c(b, c, d, e)
 tscaled <- scale(data.frame(volatile.acidity = wine$volatile.acidity[train],
                             residual.sugar = wine$residual.sugar[train],
                             free.sulfur.dioxide = wine$free.sulfur.dioxide[train],
-                            total.sulfure.dioxide = wine$total.sulfur.dioxide[train],
+                            total.sulfur.dioxide = wine$total.sulfur.dioxide[train],
                             sulfates = wine$sulphates[train],
                             alcohol = wine$alcohol[train]))
 
@@ -141,7 +143,7 @@ knn_a <- knn(tscaled,
              scale(data.frame(volatile.acidity = wine$volatile.acidity[a],
                               residual.sugar = wine$residual.sugar[a],
                               free.sulfur.dioxide = wine$free.sulfur.dioxide[a],
-                              total.sulfure.dioxide = wine$total.sulfur.dioxide[a],
+                              total.sulfur.dioxide = wine$total.sulfur.dioxide[a],
                               sulfates = wine$sulphates[a],
                               alcohol = wine$alcohol[a]),
                    center = attr(tscaled, "scaled:center"),
@@ -166,7 +168,7 @@ train <- c(a, c, d, e)
 tscaled <- scale(data.frame(volatile.acidity = wine$volatile.acidity[train],
                             residual.sugar = wine$residual.sugar[train],
                             free.sulfur.dioxide = wine$free.sulfur.dioxide[train],
-                            total.sulfure.dioxide = wine$total.sulfur.dioxide[train],
+                            total.sulfur.dioxide = wine$total.sulfur.dioxide[train],
                             sulfates = wine$sulphates[train],
                             alcohol = wine$alcohol[train]))
 
@@ -174,7 +176,7 @@ knn_b <- knn(tscaled,
              scale(data.frame(volatile.acidity = wine$volatile.acidity[b],
                               residual.sugar = wine$residual.sugar[b],
                               free.sulfur.dioxide = wine$free.sulfur.dioxide[b],
-                              total.sulfure.dioxide = wine$total.sulfur.dioxide[b],
+                              total.sulfur.dioxide = wine$total.sulfur.dioxide[b],
                               sulfates = wine$sulphates[b],
                               alcohol = wine$alcohol[b]),
                    center = attr(tscaled, "scaled:center"),
@@ -199,7 +201,7 @@ train <- c(a, b, d, e)
 tscaled <- scale(data.frame(volatile.acidity = wine$volatile.acidity[train],
                             residual.sugar = wine$residual.sugar[train],
                             free.sulfur.dioxide = wine$free.sulfur.dioxide[train],
-                            total.sulfure.dioxide = wine$total.sulfur.dioxide[train],
+                            total.sulfur.dioxide = wine$total.sulfur.dioxide[train],
                             sulfates = wine$sulphates[train],
                             alcohol = wine$alcohol[train]))
 
@@ -207,7 +209,7 @@ knn_c <- knn(tscaled,
              scale(data.frame(volatile.acidity = wine$volatile.acidity[c],
                               residual.sugar = wine$residual.sugar[c],
                               free.sulfur.dioxide = wine$free.sulfur.dioxide[c],
-                              total.sulfure.dioxide = wine$total.sulfur.dioxide[c],
+                              total.sulfur.dioxide = wine$total.sulfur.dioxide[c],
                               sulfates = wine$sulphates[c],
                               alcohol = wine$alcohol[c]),
                    center = attr(tscaled, "scaled:center"),
@@ -232,7 +234,7 @@ train <- c(a, b, c, e)
 tscaled <- scale(data.frame(volatile.acidity = wine$volatile.acidity[train],
                             residual.sugar = wine$residual.sugar[train],
                             free.sulfur.dioxide = wine$free.sulfur.dioxide[train],
-                            total.sulfure.dioxide = wine$total.sulfur.dioxide[train],
+                            total.sulfur.dioxide = wine$total.sulfur.dioxide[train],
                             sulfates = wine$sulphates[train],
                             alcohol = wine$alcohol[train]))
 
@@ -240,7 +242,7 @@ knn_d <- knn(tscaled,
              scale(data.frame(volatile.acidity = wine$volatile.acidity[d],
                               residual.sugar = wine$residual.sugar[d],
                               free.sulfur.dioxide = wine$free.sulfur.dioxide[d],
-                              total.sulfure.dioxide = wine$total.sulfur.dioxide[d],
+                              total.sulfur.dioxide = wine$total.sulfur.dioxide[d],
                               sulfates = wine$sulphates[d],
                               alcohol = wine$alcohol[d]),
                    center = attr(tscaled, "scaled:center"),
@@ -265,7 +267,7 @@ train <- c(a, b, c, d)
 tscaled <- scale(data.frame(volatile.acidity = wine$volatile.acidity[train],
                             residual.sugar = wine$residual.sugar[train],
                             free.sulfur.dioxide = wine$free.sulfur.dioxide[train],
-                            total.sulfure.dioxide = wine$total.sulfur.dioxide[train],
+                            total.sulfur.dioxide = wine$total.sulfur.dioxide[train],
                             sulfates = wine$sulphates[train],
                             alcohol = wine$alcohol[train]))
 
@@ -273,7 +275,7 @@ knn_e <- knn(tscaled,
              scale(data.frame(volatile.acidity = wine$volatile.acidity[e],
                               residual.sugar = wine$residual.sugar[e],
                               free.sulfur.dioxide = wine$free.sulfur.dioxide[e],
-                              total.sulfure.dioxide = wine$total.sulfur.dioxide[e],
+                              total.sulfur.dioxide = wine$total.sulfur.dioxide[e],
                               sulfates = wine$sulphates[e],
                               alcohol = wine$alcohol[e]),
                    center = attr(tscaled, "scaled:center"),
