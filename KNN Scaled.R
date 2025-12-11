@@ -2,6 +2,8 @@ set.seed(1)
 library(dplyr)
 library(class)
 library(pROC)
+library(ggplot2)
+library(cvms)
 
 red_wine <- read.csv("winequality-red.csv", header = TRUE, sep = ";")
 red_wine["type"] = 1
@@ -162,6 +164,24 @@ precision_a <- TP / (TP + FP)
 recall_a <- TP / (TP + FN)
 
 error_a <- mean(knn_a != wine$good[a]); error_a
+
+conf_matrix <- confusion_matrix(targets = factor(wine$good[a], levels = c(0, 1), labels = c("Bad", "Good")),
+                                factor(knn_a, levels = c(0, 1), labels = c("Bad", "Good")))
+
+plot_confusion_matrix(conf_matrix) +
+  labs(
+    x = "True Value",
+    y = "Predicted Value",
+    title = "KNN Confusion Matrix"
+  ) +
+  theme(
+    plot.title.position = "panel",
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = ggplot2::element_text(size = 12), # Adjust x-axis labels size
+    axis.text.y = ggplot2::element_text(size = 12), # Adjust y-axis labels size
+    legend.text = ggplot2::element_text(size = 20), # Adjust legend text size
+    legend.title = ggplot2::element_text(size = 16) # Adjust legend title size
+  )
 
 train <- c(a, c, d, e)
 
@@ -341,3 +361,10 @@ boxplot(wine$free.sulfur.dioxide, wine$good, ylab = "Free Sulfur Dioxide", xlab 
 boxplot(wine$sulphates, wine$good, ylab = "Sulphates", xlab = "Wine Quality")
 
 boxplot(wine$alcohol, wine$good, ylab = "Alcohol", xlab = "Wine Quality")
+
+plot(seq(0,1, length.out = 5),seq(1,0,length.out = 5),xlim = c(1.2,-0.2),ylim = c(0,1), type = "l", col = "grey",
+     main = "5-Fold CV ROC Curve for PLS Logistic Regression",
+     xlab = "False Positive Rate (1 - Specificity)",
+     ylab = "True Positive Rate (Sensitivity)"
+)
+
