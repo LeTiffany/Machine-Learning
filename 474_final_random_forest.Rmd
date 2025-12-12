@@ -1,0 +1,527 @@
+---
+title: "474_random_forest"
+author: "Chloe Florence"
+date: "2025-11-21"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Importing Data
+
+```{r, warning=FALSE}
+library(dplyr)
+library(pROC)
+library(cvms)
+library(class)
+library(leaps)
+library(tree)
+library(caret)
+library(randomForest)
+# creating binomial predictor for type of wine
+red_wine <- read.csv("winequality-red.csv", header = TRUE, sep = ";")
+red_wine["type"] = 1
+white_wine <- read.csv("winequality-white.csv", header = TRUE, sep = ";")
+white_wine["type"] = 0
+# creating binomial predictor for if a wine is good or not.
+wine <- bind_rows(red_wine, white_wine)
+wine$good <- ifelse(wine$quality > 5, 1, 0)
+```
+
+
+
+
+
+```{r}
+library(stats)
+plot(wine$good, wine$alcohol, xlab = "If wine is of good quality", ylab = "Alohol Percentage", main = "Alchohol vs. quality")
+plot(jitter(wine$quality), wine$alcohol, xlab = "If wine is of good quality", ylab = "Alohol Percentage", main = "Alchohol vs. quality")
+
+plot(wine$good, wine$alcohol)
+
+
+my_table <- table(wine$good, wine$type)
+
+table_totals <- addmargins(my_table)
+prop_table <- prop.table(table_totals)
+print(prop_table)
+print(table_totals)
+```
+
+## Boxplots
+
+```{r}
+par(mfrow = c(2,3))
+wine$good <- factor(ifelse(wine$quality > 5, "Yes", "No"))
+plot(wine$good, wine$alcohol, ylab = "Alcohol Content", xlab = "Wine Quality")
+plot(wine$good, wine$volatile.acidity, ylab = "Volatile Acidity",xlab = "Wine Quality")
+plot(wine$good, wine$residual.sugar, ylab = "Residual Sugar",xlab = "Wine Quality")
+plot(wine$good, wine$free.sulfur.dioxide, ylab = "Free Sulfur Dioxide", xlab = "Wine Quality")
+plot(wine$good, wine$total.sulfur.dioxide, ylab = "Total Sulfur Dioxide", xlab = "Wine Quality")
+plot(wine$good, wine$sulphates, ylab = "Sulphates", xlab = "Wine Quality")
+
+```
+
+
+
+## Trees
+
+First creating one individual tree
+
+```{r}
+# have to factor to make the trees
+#wine$good <- factor(ifelse(wine$quality > 5, "Yes", "No"))
+plot(wine$good, wine$alcohol)
+plot(wine$good, wine$volatile.acidity)
+set.seed(1)
+train <- sample(6497, 5198)
+wine.test <- wine[-train, ]
+wine.good <- wine[-train, 14]
+
+# control = tree.control(nobs = length(train), mincut = 1, mindev = 0.001)
+# control here forces more leaves, otherwise it classifies everything to bad with ~ 19% error
+tree.wine <- tree(good ~ . -quality, data = wine, subset = train)
+
+tree.pred <- predict(tree.wine, wine.test, type = "class")
+
+table(tree.pred, wine.good)
+
+mean(tree.pred != wine.good)
+```
+25.7% classification rate for just creating one tree. 
+
+```{r}
+plot(tree.wine)
+text(tree.wine, pretty = 0)
+```
+
+### Cross Validation Trees
+
+dev - number of cross validation errors
+
+k - is the alpha tuning value
+
+```{r}
+set.seed(1)
+cv.wine <- cv.tree(tree.wine, FUN = prune.misclass)
+#cv.wine
+#par(mfrow = c(1,2))
+#plot(cv.wine$size, cv.wine$dev, type = "b")
+#plot(cv.wine$k, cv.wine$dev, type = "b")
+```
+
+## Bagged regression
+
+### cross validation for the best value of ntree
+
+```{r}
+ctrl <- trainControl(method = "cv", number = 5)
+
+ntree_values <- seq(25, 1000, by = 25)
+
+cv.bag.model <- lapply(ntree_values, function(nt){
+  train(good ~ . - quality, data = wine, subset = train, 
+        method = "rf", trControl = ctrl, tuneLength = 1, 
+        ntree = nt)
+}) 
+
+names(cv.bag.model) <- paste0("ntree_", ntree_values)
+
+results <- sapply(cv.bag.model, function(m) max(m$results$Accuracy))
+```
+
+```{r}
+plot(ntree_values, results, ylab = "Prediction Accuracy from 5-fold CV", xlab = "ntree value", main = "CV results for Bagging")
+abline(v = ntree_values[which.max(results)], col = "blue", lty = 2)
+points(ntree_values[which.max(results)],max(results), col = "blue")
+text(ntree_values[which.max(results)],max(results), label = "(275,0.8189)", pos = 4)
+```
+
+The best value for ntree is 275.
+
+
+```{r}
+set.seed(1)
+bag.wine <- randomForest(good ~ . - quality, data = wine, subset = train, mtry = 12, ntree = 275)
+bag.wine
+```
+### Test error
+
+```{r}
+set.seed(1)
+train <- sample(6497, 5198)
+wine.test <- wine[-train, ]
+wine.good <- wine[-train, 14]
+
+yhat.bag <- predict(bag.wine, newdata = wine[-train, ])
+
+#yhat.bag <- ifelse(yhat.bag == "Yes",1,0)
+table(yhat.bag, wine.good)
+mean(yhat.bag != wine.good)
+```
+
+test error of 14.85% with bagging.
+
+Accuracy: 1 - 0.1485758 = 0.851424
+
+Precision: true positive / predicted positive: 746 / (746 + 124) = 0.8574713
+
+Recall: true positive / total true positive: 746 / (746 + 69) = 0.9153374
+
+
+### Test ROC curve
+
+```{r}
+plot(seq(0,1, length.out = 5),seq(1,0,length.out = 5),xlim = c(1.2,-0.2),ylim = c(0,1), type = "l", col = "grey",
+     main = "Test CV ROC Curve for Bagging",
+     xlab = "False Positive Rate (1 - Specificity)",
+     ylab = "True Positive Rate (Sensitivity)"
+     )
+
+table(yhat.bag, wine.good)
+
+yhat.bag.binary <- ifelse(yhat.bag == "Yes",1,0)
+wine.good.binary <- ifelse(wine.good == "Yes",1,0)
+
+roc_test <- roc(wine.good.binary, yhat.bag.binary)
+lines(roc_test)
+
+auc(roc_test)
+```
+
+### Test confusion matrix
+
+```{r}
+conf_matrix_bag <- confusion_matrix(targets = wine.good, predictions = yhat.bag)
+plot_confusion_matrix(conf_matrix_bag) + 
+  ggplot2::labs(
+    x = "True Value",
+    y = "Predicted value",
+    title = "Bagging confusion matrix"
+  ) + 
+  ggplot2::theme(
+    axis.text.x = ggplot2::element_text(size = 16), # Adjust x-axis labels size
+    axis.text.y = ggplot2::element_text(size = 16), # Adjust y-axis labels size
+    legend.text = ggplot2::element_text(size = 20), # Adjust legend text size
+    legend.title = ggplot2::element_text(size = 18) # Adjust legend title size
+  )
+
+conf_matrix <- confusion_matrix(targets = factor(wine.good, levels = c("No", "Yes"), labels = c("Bad", "Good")),
+factor(yhat.bag, levels = c("No", "Yes"), labels = c("Bad", "Good")))
+plot_confusion_matrix(conf_matrix) +
+labs(
+x = "True Value",
+y = "Predicted Value",
+title = "Bagging Confusion Matrix"
+) +
+theme(
+plot.title.position = "panel",
+plot.title = element_text(hjust = 0.5),
+axis.text.x = ggplot2::element_text(size = 12), # Adjust x-axis labels size
+axis.text.y = ggplot2::element_text(size = 12), # Adjust y-axis labels size
+legend.text = ggplot2::element_text(size = 20), # Adjust legend text size
+legend.title = ggplot2::element_text(size = 16) # Adjust legend title size
+)
+
+```
+
+### CV - AUC curve with Bagging 
+
+```{r, warning=FALSE}
+# getting the 5 different samples
+set.seed(1)
+a <- sample(1:6497, 1299)
+b <- sample(setdiff(1:6497, a), 1299)
+c <- sample(setdiff(1:6497, c(a, b)), 1299)
+d <- sample (setdiff(1:6497, c(a, b, c)), 1300)
+e <- setdiff(1:6497, c(a, b, c, d)) # length of 1300
+
+samples <- list(a = a,b = b,c = c,d = d,e = e)
+error <- c()
+
+bag_prec <- c()
+
+bag_recall <- c()
+
+bag_auc <- c()
+
+# plots the line y = x or the "guessing" line
+plot(seq(0,1, length.out = 5),seq(1,0,length.out = 5),xlim = c(1.2,-0.2),ylim = c(0,1), type = "l", col = "grey",
+     main = "5-Fold CV ROC Curve for Bagging",
+     xlab = "False Positive Rate (1 - Specificity)", 
+     ylab = "True Positive Rate (Sensitivity)"
+     )
+for(i in 1:5){
+  test <- samples[[i]]
+  train <- setdiff(1:nrow(wine), test)
+    
+  # model with i as test set
+  bag.mod <- randomForest(good ~ . - quality, data = wine, subset = train, mtry = 12, ntree = 275)
+    
+  yhat.bag <- predict(bag.mod, newdata = wine[test, ])
+    
+  actual <- wine$good[test]
+    
+  new_err <- mean(yhat.bag != actual)
+    
+  error <- c(error, new_err)
+    
+  # for ROC must be numeric
+  prob.bag <- ifelse(yhat.bag == "Yes",1,0) # 1 is good (Yes) 0 is bad (N0)
+  true <-ifelse(actual == "Yes",1,0)
+  
+  tab <- table(yhat.bag, actual)
+
+  # precision = true positive / predicted positive
+  pec <- tab[4] / sum(prob.bag == 1)
+  bag_prec <- c(bag_prec,pec)
+  
+  rec <- tab[4] / sum(true == 1)
+  bag_recall <- c(bag_recall, rec)
+  
+  roc_obj <- roc(true, prob.bag)
+  lines(roc_obj, col = i + 1)
+  
+  bag_auc <- c(bag_auc, auc(roc_obj))
+}
+
+bag_error <- error
+mean(bag_error)
+
+mean(bag_prec)
+
+mean(bag_recall)
+
+mean(bag_auc)
+```
+
+The 5-fold CV error for the bagged regression is 16.65 %.
+
+Accuracy: 1 - 16.65% = 83.35%
+
+Means 83.35% of the data was classified correctly
+
+Precision: true positive / total predicted positive - 85.47%
+
+Means that about 85.47 % of the predicted positive values are actually positive
+
+Recall: true positive / total true positive - 88.76%
+
+Means 88.76% of the true positive values were actually classified as being positive.
+
+## Random forest
+
+### Cross validation for best mtry value
+
+```{r, warning = FALSE}
+ctrl <- trainControl(method = "cv", number = 10)
+
+cv.model <- train(good ~ . - quality, data = wine, subset = train, method = "rf", trControl = ctrl, tuneGrid = expand.grid(mtry = c(1:12)))
+
+cv.model
+```
+
+```{r}
+names(cv.model)
+cv.model$results
+plot(cv.model$results$mtry, cv.model$results$Accuracy, main = "CV results for Random Forest", xlab = "m value", ylab = "Prediction Accuracy from 5-fold CV")
+#plot(cv.model$results$mtry, cv.model$results$Kappa)
+points(2,cv.model$results$Accuracy[2], col = "blue")
+abline(v = 2, lty = 2, col = "blue")
+text(2,cv.model$results$Accuracy[2], label = "(2,0.825)", pos = 4)
+```
+
+### Test Error
+
+```{r}
+set.seed(1)
+train <- sample(6497, 5198)
+
+yhat.bag <- predict(bag.wine, newdata = wine[-train, ])
+
+yhat.bag <- ifelse(yhat.bag == "Yes",1,0)
+rf.wine <- randomForest(good ~ . - quality, data = wine, subset = train, mtry = 2,  importance = TRUE)
+rf.wine
+
+yhat.rf <- predict(rf.wine, newdata = wine[-train, ])
+table(yhat.rf, wine.good)
+mean(yhat.rf != wine.good)
+```
+
+Accuracy: 1 - 0.1493457 = .8506
+
+Precision: true positive / perdicted positive: 751 / (751 + 130) = 0.8524404
+
+Recall: true positive / total true positive: 751 / (751 + 64) = .921447
+
+### test set precision accuracy and recall
+
+```{r}
+plot(seq(0,1, length.out = 5),seq(1,0,length.out = 5),xlim = c(1.2,-0.2),ylim = c(0,1), type = "l", col = "grey",
+     main = "Test CV ROC Curve for Random Forest",
+     xlab = "False Positive Rate (1 - Specificity)",
+     ylab = "True Positive Rate (Sensitivity)"
+     )
+
+table(yhat.bag, wine.good)
+
+yhat.rf.binary <- ifelse(yhat.bag == "Yes",1,0)
+wine.good.binary <- ifelse(wine.good == "Yes",1,0)
+
+roc_test <- roc(wine.good.binary, yhat.rf.binary)
+lines(roc_test)
+
+auc(roc_test)
+```
+
+
+
+
+### RF confusion matrix plot
+```{r}
+
+library(ggplot2)
+conf_matrix_cvms <- confusion_matrix(targets = wine.good, predictions = yhat.rf)
+plot_confusion_matrix(conf_matrix_cvms) + 
+  ggplot2::labs(
+    x = "True Value",
+    y = "Predicted value",
+    title = "Random forest confusion matrix"
+  ) + 
+  ggplot2::theme(
+    axis.text.x = ggplot2::element_text(size = 16), # Adjust x-axis labels size
+    axis.text.y = ggplot2::element_text(size = 16), # Adjust y-axis labels size
+    legend.text = ggplot2::element_text(size = 20), # Adjust legend text size
+    legend.title = ggplot2::element_text(size = 18) # Adjust legend title size
+  )
+
+conf_matrix <- confusion_matrix(targets = factor(wine.good, levels = c("No", "Yes"), labels = c("Bad", "Good")),
+factor(yhat.rf, levels = c("No", "Yes"), labels = c("Bad", "Good")))
+plot_confusion_matrix(conf_matrix) +
+labs(
+x = "True Value",
+y = "Predicted Value",
+title = "Random Forest Confusion Matrix"
+) +
+theme(
+plot.title.position = "panel",
+plot.title = element_text(hjust = 0.5),
+axis.text.x = ggplot2::element_text(size = 12), # Adjust x-axis labels size
+axis.text.y = ggplot2::element_text(size = 12), # Adjust y-axis labels size
+legend.text = ggplot2::element_text(size = 20), # Adjust legend text size
+legend.title = ggplot2::element_text(size = 16) # Adjust legend title size
+)
+```
+
+
+This has a test error of 14.93% the lowest yet. 
+
+
+### RF vars importance
+
+```{r}
+importance(rf.wine)
+```
+
+```{r}
+varImpPlot(rf.wine)
+```
+
+### CV to find precision recall + more
+
+```{r}
+# getting the 5 different samples
+set.seed(1)
+a <- sample(1:6497, 1299)
+b <- sample(setdiff(1:6497, a), 1299)
+c <- sample(setdiff(1:6497, c(a, b)), 1299)
+d <- sample (setdiff(1:6497, c(a, b, c)), 1300)
+e <- setdiff(1:6497, c(a, b, c, d)) # length of 1300
+
+samples <- list(a = a,b = b,c = c,d = d,e = e)
+error <- c()
+
+rf_prec <- c()
+
+rf_recall <- c()
+
+auc <- c()
+
+plot(seq(1,0, length.out = 5),seq(0,1,length.out = 5),xlim = c(1.5,-0.5),ylim = c(0,1), type = "l", col = "grey",
+     main = "5 -fold CV ROC Curve for Random Forest",
+     xlab = "False Positive Rate (1 - Specificity)", 
+     ylab = "True Positive Rate (Sensitivity)"
+     )
+
+for (i in 1:5){
+  # model for this training data set
+  test <- samples[[i]]
+  train <- setdiff(1:nrow(wine), test)
+  
+  rf.mod <- randomForest(good ~ . - quality, data = wine, subset = train, mtry = 2,  importance = TRUE)
+  
+  yhat.rf <- predict(rf.mod, newdata = wine[test, ])
+  actual <- wine$good[test]
+  
+  new_err <- mean(yhat.rf != actual)
+  
+  error <- c(error, new_err)
+  
+  # for ROC needs to be numeric
+  prob.rf <- ifelse(yhat.rf == "Yes",1,0) # 1 is good (Yes) 0 is bad (N0)
+   true <-ifelse(actual == "Yes",1,0)
+   
+  tab <- table(yhat.rf, actual)
+  
+  #precision
+  pec <- tab[4] / sum(prob.rf == 1)
+  rf_prec <- c(rf_prec,pec)
+  
+  # recall 
+  rec <- tab[4] / sum(true == 1)
+  rf_recall <- c(rf_recall, rec)
+  
+  roc_obj <- roc(true, prob.rf)
+  lines(roc_obj, col = i + 1)
+  
+  auc <- c(auc, auc(roc_obj))
+}
+
+rf_error <- error
+mean(rf_error)
+
+mean(rf_prec)
+
+mean(rf_recall)
+
+mean(auc)
+```
+
+Random Forest gives us a 5-fold cross validation error of 16.299%
+
+Accuracy: 1 - 0.1629943 = .8370057 = 83.7%
+
+Means 83.7% of the data was classified correctly
+
+Precision: true positive / total predicted positive - 85.11%
+
+Means that about 85.11% of the predicted positive values are actually positive
+
+Recall: true positive / total true positive - 89.97%
+
+Means 89.97% of the true positive values were actually classified as being positive.
+
+
+
+Random Forests has the smaller misclassification rate here with 5-fold cross validation. This is expected because random forest should outperform bagging. This shows our finding that the test error for bagging being smaller that random forest is up to chance and that overall the random forest is the better model.
+
+
+
+
+
+
+
+
+
